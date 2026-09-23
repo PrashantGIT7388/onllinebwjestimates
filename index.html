@@ -1942,7 +1942,7 @@ function getAutoPctDisplay(mv, variant, weight) {
   if (makingPerGram > 0) return 0;
   if (sil || variant === 'keel_nosering') return 0;
   if (weight >= 3) return mv === "20" ? 16 : 18;
-  if (mv === '24') return 31;
+  if (mv === '24') return 0;
   else return weight >= 1.5 ? 20 : 23;
 }
 
