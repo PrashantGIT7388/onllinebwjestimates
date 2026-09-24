@@ -896,7 +896,6 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 
 /* ============================================================
    RESPONSIVE — DESKTOP IMPROVEMENTS (Adjust Page Tables)
-   ⭐ UPDATE #2 (DESKTOP): Larger Update W/O GST + Update W/ GST inputs
    ============================================================ */
 @media (min-width:769px){
   .adjustment-input {
@@ -974,21 +973,23 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
     border-radius:14px;
   }
 
-  /* Hide variant + extra-removal + add button on mobile */
+  /* Hide variant + extra-removal on mobile (add button is now shown) */
   .variant-field,
-  .extra-removal-field,
-  .btn-row{
+  .extra-removal-field{
     display:none !important;
   }
 
+  /* ⭐ Weight field + Add button side-by-side on the same row */
   .horizontal-fields{
     display:grid;
-    grid-template-columns:1fr;
+    grid-template-columns: 1fr auto;
     gap:10px;
-    align-items:stretch;
+    align-items: end;
   }
-  .horizontal-fields .metal-group{grid-column:1 / -1}
+  .horizontal-fields .metal-group{grid-column: 1 / -1}
   .field-group{min-width:0;flex:none}
+  .weight-field { grid-column: 1 / 2; }
+  .btn-row      { grid-column: 2 / 3; }
 
   .metal-group > label{text-align:right}
   .metal-buttons{justify-content:flex-end}
@@ -1007,7 +1008,64 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
     box-shadow:0 0 0 4px rgba(44,95,45,.15);
   }
 
-  .mobile-enter-hint{display:block}
+  /* Hide the enter hint — the + button next to weight is self-explanatory */
+  .mobile-enter-hint{ display: none; }
+
+  /* ⭐ Add-to-Bill button on mobile: only "+" icon, aligned with weight input */
+  /* .btn-row {
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+  .btn-add {
+    min-height: 52px;
+    min-width: 62px;
+    padding: 0 20px;
+    border-radius: 14px;
+    font-size: 0;
+    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-add::after {
+    content: "➕";
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+  .btn-add:active { transform: scale(.94); } */
+
+    /* ⭐ Add-to-Bill button on mobile: clean "+" icon, aligned with weight input */
+  .btn-row {
+    display: flex !important;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+  .btn-add {
+    height: 52px;                 /* exact same height as #weight */
+    width: 54px;
+    min-width: 54px;
+    padding: 0;
+    border-radius: 14px;          /* matches #weight border-radius */
+    font-size: 0;                 /* hides "➕ Add to Bill" text */
+    line-height: 0;
+    background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+    box-shadow: 0 4px 12px rgba(230,126,34,.3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform .12s ease, filter .12s ease;
+  }
+  .btn-add::before {
+    content: "+";
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 1;
+    color: #fff;
+    transform: translateY(-1px);  /* optical centering */
+  }
+  .btn-add:hover { filter: brightness(1.06); }
+  .btn-add:active { transform: scale(.92); }
 
   /* ⭐ Price cards mobile order:
      Row 1: Before GST | After GST
