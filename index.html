@@ -1011,14 +1011,37 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
   .adjustment-input,.total-footer-input{width:70px;font-size:.68rem;padding:5px 3px}
 
   .making-per-gram-info{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:5px;
+    flex-direction:row;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:5px 10px;
     font-size:.72rem;
     padding:8px 12px;
   }
   .grand-total{font-size:.82rem;padding:10px 12px}
   .toast{bottom:96px}
+
+  /* ---- MOBILE ADJUSTMENTS ---- */
+  .view-btn { display: none !important; }
+  .adjustment-table-wrapper { overflow-x: auto; }
+  .adjustment-table-wrapper::-webkit-scrollbar { height:6px; }
+  .adjustment-table-wrapper::-webkit-scrollbar-thumb { background:#c9bca8; border-radius:10px; }
+  .adjustment-table-wrapper { scrollbar-width:thin; }
+  #horizontal_tables { padding-bottom: 6px; }
+
+  /* Move total control bar into adjust page */
+  #totalControlPanel[data-page="bill"] { display:none !important; }
+
+  /* ---- DRAG FROM RIGHT TO LEFT ON MOBILE ---- */
+  .bill-table-wrapper,
+  .adjustment-table-wrapper {
+    direction: rtl;
+    text-align: left;
+  }
+  .bill-table,
+  .adjustment-table {
+    direction: ltr;
+  }
 }
 
 /* ============================================================
@@ -1052,6 +1075,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
   .mobile-nav button .ico{font-size:.98rem}
 
   .making-per-gram-info{font-size:.68rem}
+  .making-per-gram-info .karat-item { font-size: .65rem; padding:2px 8px; }
 }
 </style>
 </head>
@@ -1249,17 +1273,17 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
         <div style="text-align:center;padding:1.2rem;font-size:.75rem;color:#998f7e;">✨ Add silver items</div>
       </div>
     </div>
-  </div>
 
-  <!-- ================= TOTAL CONTROL ================= -->
-  <div class="total-control-bar" id="totalControlPanel" data-page="bill">
-    <div class="total-badge"><span>💰 GOLD TOTAL</span><span id="summaryGoldTotal">₹0</span></div>
-    <div class="total-badge"><span>🥈 SILVER TOTAL</span><span id="summarySilverTotal">₹0</span></div>
-    <div class="total-badge"><span>🧾 BILL GRAND TOTAL</span><span id="summaryBillGrandTotal">₹0</span></div>
-    <div class="total-edit-area">
-      <label>✏️ Edit Bill Total:</label>
-      <input type="number" id="manualBillTotalInput" placeholder="Enter new total" step="any" value="0" />
-      <button id="resetBillTotalBtn" class="apply-total-btn reset-bill-total">↺ Reset</button>
+    <!-- === TOTAL CONTROL PANEL MOVED INTO ADJUST PAGE === -->
+    <div class="total-control-bar" id="totalControlPanelAdjust" data-page="adjust">
+      <div class="total-badge"><span>💰 GOLD TOTAL</span><span id="summaryGoldTotal">₹0</span></div>
+      <div class="total-badge"><span>🥈 SILVER TOTAL</span><span id="summarySilverTotal">₹0</span></div>
+      <div class="total-badge"><span>🧾 BILL GRAND TOTAL</span><span id="summaryBillGrandTotal">₹0</span></div>
+      <div class="total-edit-area">
+        <label>✏️ Edit Bill Total:</label>
+        <input type="number" id="manualBillTotalInput" placeholder="Enter new total" step="any" value="0" />
+        <button id="resetBillTotalBtn" class="apply-total-btn reset-bill-total">↺ Reset</button>
+      </div>
     </div>
   </div>
 
@@ -1278,7 +1302,6 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
    BACKEND CONFIG
    ============================================================ */
 const API_BASE = 'https://bwjbackend-2.onrender.com'
-// 'https://bwjbackend.onrender.com';
 const RATES_PATH = '/api/rates';
 
 /* ============================================================
@@ -1360,7 +1383,6 @@ function formatRatesTimestamp(dateInput) {
   };
 }
 
-/* FIXED: no fallback to "now" — only shows a real backend value */
 function setRatesUpdatedAt(dateInput) {
   if (dateInput === null || dateInput === undefined || dateInput === '') {
     ratesDateEl.textContent = 'Not available';
@@ -1381,7 +1403,6 @@ function setRatesUpdatedAt(dateInput) {
 function extractRatesTimestamp(json) {
   if (!json || typeof json !== 'object') return null;
 
-  // Sort keys so more-specific ones are tried first
   const keys = [
     'updatedAt','updated_at','lastUpdated','last_updated',
     'modifiedAt','modified_at',
@@ -1397,12 +1418,23 @@ function extractRatesTimestamp(json) {
     for (const k of keys) {
       const v = c[k];
       if (v === undefined || v === null || v === '') continue;
-      // Reject obviously wrong values
       if (typeof v === 'string' && v.trim() === '') continue;
       return v;
     }
   }
   return null;
+}
+
+/* Normalize any timestamp to ISO string for reliable comparison */
+function normalizeTimestamp(ts) {
+  if (!ts) return null;
+  try {
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return String(ts); // fallback to raw string
+    return d.toISOString();
+  } catch (e) {
+    return String(ts);
+  }
 }
 
 /* ============================================================
@@ -1552,14 +1584,59 @@ const RATE_FIELDS = {
 };
 
 /* ============================================================
-   BACKEND — FETCH RATES (with cold-start retry)
+   CACHE KEYS
+   ============================================================ */
+const CACHE_KEY      = 'bwj_rates_cache_v1';
+const CACHE_TIME_KEY = 'bwj_rates_cache_time_v1';
+
+/* ============================================================
+   CACHE HELPERS
+   ============================================================ */
+function cacheRatesLocally(timestamp) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(buildRatesPayload()));
+    if (timestamp !== undefined && timestamp !== null && timestamp !== '') {
+      localStorage.setItem(CACHE_TIME_KEY, String(timestamp));
+    }
+    // If no timestamp passed, keep existing timestamp untouched
+  } catch (e) {}
+}
+
+function loadCachedRates() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      const obj = JSON.parse(raw);
+      if (obj && typeof obj === 'object') applyRatesFromPayload(obj);
+    }
+  } catch (e) {}
+}
+
+function getCachedTimestamp() {
+  try {
+    return localStorage.getItem(CACHE_TIME_KEY);
+  } catch (e) {
+    return null;
+  }
+}
+
+/* ============================================================
+   BACKEND — FETCH RATES (STALE-WHILE-REVALIDATE)
+   ============================================================
+   Logic:
+     1. init() loads cached rates and paints UI instantly.
+     2. This function runs in background:
+        - Fetches fresh rates from backend.
+        - Compares backend updatedAt with cached updatedAt.
+        - If SAME → do nothing (cache was correct).
+        - If DIFFERENT → update localStorage + re-render UI.
    ============================================================ */
 async function fetchRatesFromBackend(isRetry = false) {
   setBackendStatus('loading');
-  setRatesStatus(isRetry ? 'Waking server…' : 'Loading…');
+  setRatesStatus(isRetry ? 'Waking server…' : 'Checking…');
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), 90000); // 90s for cold start
 
   try {
     const res = await fetch(API_BASE + RATES_PATH, {
@@ -1573,54 +1650,48 @@ async function fetchRatesFromBackend(isRetry = false) {
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
     const json = await res.json();
-    console.log(json.data.updatedAt)
-    // ===================================================================================
-    const timestamp = json.data.updatedAt;
-const date = new Date(timestamp);
 
-// Option 1: Local date & time string
-console.log(date.toLocaleString()); 
-// e.g., "9/21/2026, 11:58:50 PM" (depends on timezone)
+    /* Extract backend timestamp */
+    const backendTs = json?.data?.updatedAt ?? extractRatesTimestamp(json);
+    const cachedTs  = getCachedTimestamp();
 
-// Option 2: Custom format
-console.log(date.toLocaleDateString('en-US', {
-  year: 'numeric', month: 'long', day: 'numeric',
-  hour: '2-digit', minute: '2-digit', second: '2-digit'
-}));
-// "September 21, 2026, 11:58:50 PM"
+    /* ─── COMPARE TIMESTAMPS ─────────────────────────────── */
+    const normalizedBackend = normalizeTimestamp(backendTs);
+    const normalizedCached  = normalizeTimestamp(cachedTs);
 
-// Option 3: ISO date only
-console.log(date.toISOString().split('T')[0]); // "2026-09-21"
+    const cacheIsFresh =
+      normalizedBackend &&
+      normalizedCached &&
+      normalizedBackend === normalizedCached;
 
-// Option 4: Readable format (YYYY-MM-DD HH:mm:ss)
-const pad = n => String(n).padStart(2, '0');
-const formatted = `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-console.log(formatted); // "2026-09-21 23:58:50" (local time)
-    // ===================================================================================
-    
+    if (cacheIsFresh) {
+      /* ⚡ Cache is already up to date — skip update */
+      console.log('[BWJ] Rates unchanged. Using cache.');
+      setBackendStatus('ok');
+      setRatesStatus('✅ Up to date');
+      setTimeout(() => setRatesStatus('Live'), 1800);
+      return true;
+    }
+
+    /* ─── CACHE STALE → APPLY FRESH RATES ────────────────── */
+    console.log('[BWJ] Rates changed. Updating cache.', {
+      from: normalizedCached,
+      to: normalizedBackend
+    });
+
     const applied = applyRatesFromPayload(json);
     if (!applied) throw new Error('Unrecognised rates payload');
 
-    /* ── KEY FIX ──────────────────────────────────────────
-       Only trust a timestamp that actually came from the backend.
-       Never fall back to `new Date()` (that's the FETCH time, not
-       the UPDATE time).
-       ──────────────────────────────────────────────────── */
-    const backendTs = json.data.updatedAt;
     if (backendTs) {
       setRatesUpdatedAt(backendTs);
-      try { localStorage.setItem(CACHE_TIME_KEY, String(backendTs)); } catch (e) {}
+      cacheRatesLocally(backendTs);   // ✅ persist rates + timestamp
     } else {
-      // Backend gave no updatedAt — show last known update time
-      let cached = null;
-      try { cached = localStorage.getItem(CACHE_TIME_KEY); } catch (e) {}
-      setRatesUpdatedAt(cached);
+      // Backend gave no timestamp — keep old one, save rates only
+      cacheRatesLocally();
     }
 
-    cacheRatesLocally();   // rates only; timestamp handled above
-
     setBackendStatus('ok');
-    setRatesStatus('✅ Synced');
+    setRatesStatus('✅ Updated');
     setTimeout(() => setRatesStatus('Live'), 2200);
     calculateAndUpdateUI();
     return true;
@@ -1629,17 +1700,16 @@ console.log(formatted); // "2026-09-21 23:58:50" (local time)
     clearTimeout(timeout);
     console.warn('[BWJ] rate fetch failed:', err.message || err);
 
-    // One automatic retry — Render may still be waking up
+    /* One automatic retry — Render may still be waking up */
     if (!isRetry) {
       setRatesStatus('⏳ Retrying…');
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 2000));
       return fetchRatesFromBackend(true);
     }
 
     setBackendStatus('error');
     setRatesStatus('⚠️ Offline cache');
-    loadCachedRates();
-    calculateAndUpdateUI();
+    // Cache already loaded in init() — nothing more to do
     return false;
   }
 }
@@ -1709,12 +1779,11 @@ async function saveRatesToBackend() {
       savedTs = extractRatesTimestamp(j);
     } catch (e) { /* empty body is fine */ }
 
-    // If the backend did not echo a timestamp, this moment IS the
-    // last-update time (we just saved) — only case where "now" is correct.
+    // If backend did not echo a timestamp, this moment IS the last-update time
     if (!savedTs) savedTs = new Date();
 
     setRatesUpdatedAt(savedTs);
-    cacheRatesLocally(savedTs);
+    cacheRatesLocally(savedTs);   // ✅ persist rates + timestamp
 
     setBackendStatus('ok');
     setRatesStatus('✅ Rates Saved');
@@ -1731,38 +1800,6 @@ async function saveRatesToBackend() {
     submitBtn.disabled = false;
     submitBtn.textContent = originalLabel;
   }
-}
-
-/* ============================================================
-   OFFLINE CACHE
-   ============================================================ */
-const CACHE_KEY      = 'bwj_rates_cache_v1';
-const CACHE_TIME_KEY = 'bwj_rates_cache_time_v1';
-
-/* FIXED: only store a timestamp if one is explicitly given */
-function cacheRatesLocally(timestamp) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(buildRatesPayload()));
-    if (timestamp !== undefined && timestamp !== null) {
-      const iso = (timestamp instanceof Date)
-        ? timestamp.toISOString()
-        : String(timestamp);
-      localStorage.setItem(CACHE_TIME_KEY, iso);
-    }
-  } catch (e) {}
-}
-
-function loadCachedRates() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    const timeRaw = localStorage.getItem(CACHE_TIME_KEY);
-    if (raw) {
-      const obj = JSON.parse(raw);
-      if (obj && typeof obj === 'object') applyRatesFromPayload(obj);
-    }
-    // FIXED: do NOT invent a timestamp if none is cached
-    setRatesUpdatedAt(timeRaw || null);
-  } catch (e) {}
 }
 
 /* ============================================================
@@ -3335,7 +3372,11 @@ window.addEventListener('resize', () => {
 });
 
 /* ============================================================
-   INIT
+   INIT — STALE-WHILE-REVALIDATE
+   ============================================================
+   1. Load cached rates from localStorage → paint UI INSTANTLY.
+   2. Make estimator usable immediately.
+   3. Fire background fetch → compares timestamps → updates if needed.
    ============================================================ */
 (function init() {
   setupMetalButtons();
@@ -3345,15 +3386,16 @@ window.addEventListener('resize', () => {
   lockRatesEditing();
   updateAdminButtonLabel();
 
-  // Show last cached update time immediately (if any)
+  /* ⭐ STEP 1 — Instant paint from localStorage */
   try {
-    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
-    if (cachedTime) setRatesUpdatedAt(cachedTime);
-    else setRatesUpdatedAt(null);  // shows "Not available" — no fake "now"
+    const cachedTime = getCachedTimestamp();
+    loadCachedRates();              // fills rate inputs from cache
+    setRatesUpdatedAt(cachedTime);  // shows cached "updated at" time
   } catch (e) {
     setRatesUpdatedAt(null);
   }
 
+  /* ⭐ STEP 2 — Estimator usable immediately */
   calculateAndUpdateUI();
   renderAll();
 
@@ -3364,6 +3406,8 @@ window.addEventListener('resize', () => {
   }
 
   submitBtn.addEventListener('click', saveRatesToBackend);
+
+  /* ⭐ STEP 3 — Background refresh (SWR) */
   fetchRatesFromBackend();
 })();
 </script>
