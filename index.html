@@ -348,7 +348,7 @@ select,input[type="number"],input[type="text"]{
 }
 select:focus,input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #f5b04226}
 
-/* ---------- METAL GROUP (right-aligned buttons) ---------- */
+/* ---------- METAL GROUP ---------- */
 .metal-group{flex:1 1 100%;min-width:100%}
 .metal-group > label{text-align:right}
 .metal-buttons{
@@ -680,7 +680,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 .reset-bill-total:hover{background:#d5c8bc}
 
 /* ============================================================
-   ADJUSTMENT GRID — stacked VERTICALLY
+   ADJUSTMENT GRID
    ============================================================ */
 #horizontal_tables{
   display:flex;
@@ -895,6 +895,47 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 }
 
 /* ============================================================
+   RESPONSIVE — DESKTOP IMPROVEMENTS (Adjust Page Tables)
+   ⭐ UPDATE #2 (DESKTOP): Larger Update W/O GST + Update W/ GST inputs
+   ============================================================ */
+@media (min-width:769px){
+  .adjustment-input {
+    width: 110px;
+    padding: 8px 10px;
+    font-size: .95rem;
+    font-weight: 700;
+    border-width: 2px;
+  }
+  .adjustment-input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  .total-footer-input {
+    width: 110px;
+    padding: 8px 10px;
+    font-size: .95rem;
+    font-weight: 700;
+    border-width: 2px;
+  }
+  .total-footer-input:focus {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+  .adjustment-table th,
+  .adjustment-table td {
+    padding: 8px 8px;
+  }
+  .adjustment-table {
+    width: 100%;
+    min-width: 820px;
+    table-layout: auto;
+  }
+  .adjustment-table td {
+    white-space: nowrap;
+  }
+}
+
+/* ============================================================
    RESPONSIVE — MOBILE
    ============================================================ */
 @media (max-width:768px){
@@ -933,12 +974,10 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
     border-radius:14px;
   }
 
+  /* Hide variant + extra-removal + add button on mobile */
   .variant-field,
   .extra-removal-field,
-  .btn-row,
-  .metal-value-item,
-  .making-pct-item,
-  .making-rs-item{
+  .btn-row{
     display:none !important;
   }
 
@@ -970,6 +1009,10 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 
   .mobile-enter-hint{display:block}
 
+  /* ⭐ Price cards mobile order:
+     Row 1: Before GST | After GST
+     Row 2: Making %   | Making (₹)
+     Metal Value is hidden. */
   .price-cards{
     grid-template-columns:1fr 1fr;
     gap:10px;
@@ -989,8 +1032,21 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
   #result_before_gst{color:#b45309}
   #result_after_gst{color:var(--green)}
 
-  #beforeGstItem{background:#fffbef;border-color:#f5dca0}
-  #afterGstItem{background:#f3fbf3;border-color:#c9dccb}
+  #beforeGstItem{
+    background:#fffbef;
+    border-color:#f5dca0;
+    order: 1;
+  }
+  #afterGstItem{
+    background:#f3fbf3;
+    border-color:#c9dccb;
+    order: 2;
+  }
+  .making-pct-item{ order: 3; }
+  .making-rs-item{ order: 4; }
+
+  /* Hide metal value card on mobile */
+  .metal-value-item{ display: none !important; }
 
   .total-control-bar{flex-direction:column;align-items:stretch;padding:10px 12px;gap:8px}
   .total-badge{flex-direction:row;justify-content:space-between;align-items:center;padding:8px 12px}
@@ -1000,7 +1056,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 
   .bill-header{flex-direction:column;align-items:flex-start;gap:8px}
   .bill-header > div{width:100%}
-  .view-btn,.btn-clear{flex:1}
+  .btn-clear{flex:1}
 
   .bill-table,.adjustment-table{min-width:520px;font-size:.62rem}
   .bill-table th,.adjustment-table th{font-size:.55rem;padding:6px 4px}
@@ -1008,7 +1064,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 
   .drag-cell{width:32px;min-width:32px;font-size:1.05rem}
 
-  .adjustment-input,.total-footer-input{width:70px;font-size:.68rem;padding:5px 3px}
+  .adjustment-input,.total-footer-input{width:78px;font-size:.7rem;padding:5px 3px}
 
   .making-per-gram-info{
     flex-direction:row;
@@ -1021,26 +1077,51 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
   .grand-total{font-size:.82rem;padding:10px 12px}
   .toast{bottom:96px}
 
-  /* ---- MOBILE ADJUSTMENTS ---- */
-  .view-btn { display: none !important; }
-  .adjustment-table-wrapper { overflow-x: auto; }
-  .adjustment-table-wrapper::-webkit-scrollbar { height:6px; }
-  .adjustment-table-wrapper::-webkit-scrollbar-thumb { background:#c9bca8; border-radius:10px; }
-  .adjustment-table-wrapper { scrollbar-width:thin; }
-  #horizontal_tables { padding-bottom: 6px; }
-
-  /* Move total control bar into adjust page */
-  #totalControlPanel[data-page="bill"] { display:none !important; }
-
-  /* ---- DRAG FROM RIGHT TO LEFT ON MOBILE ---- */
+  /* ⭐ Tables drag/scroll from RIGHT to LEFT on mobile */
   .bill-table-wrapper,
   .adjustment-table-wrapper {
     direction: rtl;
     text-align: left;
+    overflow-x: auto;
+    overflow-y: auto;
   }
+  .bill-table-wrapper::-webkit-scrollbar,
+  .adjustment-table-wrapper::-webkit-scrollbar{height:6px;width:6px}
+  .bill-table-wrapper::-webkit-scrollbar-thumb,
+  .adjustment-table-wrapper::-webkit-scrollbar-thumb{background:#c9bca8;border-radius:10px}
+  .bill-table-wrapper,
+  .adjustment-table-wrapper{scrollbar-width:thin}
+
+  /* Reset inner table direction so content reads LTR */
   .bill-table,
   .adjustment-table {
     direction: ltr;
+    min-width: 700px;
+  }
+
+  /* ⭐ Updated Making spans stay horizontal (single line) */
+  .adjustment-table td.making-display{
+    white-space: nowrap;
+  }
+  .adjustment-table td.making-display > span{
+    display: inline-block;
+    margin: 0 2px;
+  }
+
+  /* ⭐ Hide View buttons on mobile — tables always visible */
+  .view-btn{ display: none !important; }
+
+  /* Move total control bar into adjust page */
+  #totalControlPanel[data-page="bill"] { display:none !important; }
+
+  /* ⭐ Rates page mobile — show only 18K, 20K, 22K, Silver.
+     Hide 24K Gold (4th) and 92.5 Silver (6th). */
+  .rates-grid .input-row:nth-child(4),
+  .rates-grid .input-row:nth-child(6) {
+    display: none !important;
+  }
+  .rates-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
@@ -1069,13 +1150,16 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
   #weight{font-size:1rem;padding:11px 12px}
 
   .bill-table,.adjustment-table{min-width:460px;font-size:.58rem}
-  .adjustment-input,.total-footer-input{width:60px;font-size:.62rem}
+  .adjustment-input,.total-footer-input{width:70px;font-size:.66rem}
 
   .mobile-nav button{font-size:.55rem}
   .mobile-nav button .ico{font-size:.98rem}
 
   .making-per-gram-info{font-size:.68rem}
   .making-per-gram-info .karat-item { font-size: .65rem; padding:2px 8px; }
+
+  /* Slightly narrower adjustment table on very small phones */
+  .adjustment-table { min-width: 660px; }
 }
 </style>
 </head>
@@ -1246,7 +1330,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
     <div class="grand-total" id="grandTotalDisplay">💰 Grand Total (incl. GST): ₹ 0.00</div>
   </div>
 
-  <!-- ================= ADJUSTMENTS (stacked vertically) ================= -->
+  <!-- ================= ADJUSTMENTS ================= -->
   <div id="horizontal_tables" data-page="adjust">
     <div class="adjustment-card gold-card">
       <div class="bill-header">
@@ -1274,7 +1358,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
       </div>
     </div>
 
-    <!-- === TOTAL CONTROL PANEL MOVED INTO ADJUST PAGE === -->
+    <!-- === TOTAL CONTROL PANEL (moved into ADJUST page) === -->
     <div class="total-control-bar" id="totalControlPanelAdjust" data-page="adjust">
       <div class="total-badge"><span>💰 GOLD TOTAL</span><span id="summaryGoldTotal">₹0</span></div>
       <div class="total-badge"><span>🥈 SILVER TOTAL</span><span id="summarySilverTotal">₹0</span></div>
@@ -1301,7 +1385,7 @@ tr.drag-over-top{border-top:3px solid var(--gold)}
 /* ============================================================
    BACKEND CONFIG
    ============================================================ */
-const API_BASE = 'https://bwjbackend-2.onrender.com'
+const API_BASE = 'https://bwjbackend-2.onrender.com';
 const RATES_PATH = '/api/rates';
 
 /* ============================================================
@@ -1399,10 +1483,8 @@ function setRatesUpdatedAt(dateInput) {
   ratesTimeEl.textContent = formatted.time;
 }
 
-/* Try to pull a timestamp out of the backend JSON payload */
 function extractRatesTimestamp(json) {
   if (!json || typeof json !== 'object') return null;
-
   const keys = [
     'updatedAt','updated_at','lastUpdated','last_updated',
     'modifiedAt','modified_at',
@@ -1410,10 +1492,8 @@ function extractRatesTimestamp(json) {
     'updatedOn','updated_on',
     'date','fetchedAt','fetched_at'
   ];
-
   const containers = [json, json?.data, json?.rates, json?.result, json?.meta]
     .filter(c => c && typeof c === 'object');
-
   for (const c of containers) {
     for (const k of keys) {
       const v = c[k];
@@ -1425,12 +1505,11 @@ function extractRatesTimestamp(json) {
   return null;
 }
 
-/* Normalize any timestamp to ISO string for reliable comparison */
 function normalizeTimestamp(ts) {
   if (!ts) return null;
   try {
     const d = new Date(ts);
-    if (isNaN(d.getTime())) return String(ts); // fallback to raw string
+    if (isNaN(d.getTime())) return String(ts);
     return d.toISOString();
   } catch (e) {
     return String(ts);
@@ -1598,7 +1677,6 @@ function cacheRatesLocally(timestamp) {
     if (timestamp !== undefined && timestamp !== null && timestamp !== '') {
       localStorage.setItem(CACHE_TIME_KEY, String(timestamp));
     }
-    // If no timestamp passed, keep existing timestamp untouched
   } catch (e) {}
 }
 
@@ -1622,21 +1700,13 @@ function getCachedTimestamp() {
 
 /* ============================================================
    BACKEND — FETCH RATES (STALE-WHILE-REVALIDATE)
-   ============================================================
-   Logic:
-     1. init() loads cached rates and paints UI instantly.
-     2. This function runs in background:
-        - Fetches fresh rates from backend.
-        - Compares backend updatedAt with cached updatedAt.
-        - If SAME → do nothing (cache was correct).
-        - If DIFFERENT → update localStorage + re-render UI.
    ============================================================ */
 async function fetchRatesFromBackend(isRetry = false) {
   setBackendStatus('loading');
   setRatesStatus(isRetry ? 'Waking server…' : 'Checking…');
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 90000); // 90s for cold start
+  const timeout = setTimeout(() => controller.abort(), 90000);
 
   try {
     const res = await fetch(API_BASE + RATES_PATH, {
@@ -1651,11 +1721,9 @@ async function fetchRatesFromBackend(isRetry = false) {
 
     const json = await res.json();
 
-    /* Extract backend timestamp */
     const backendTs = json?.data?.updatedAt ?? extractRatesTimestamp(json);
     const cachedTs  = getCachedTimestamp();
 
-    /* ─── COMPARE TIMESTAMPS ─────────────────────────────── */
     const normalizedBackend = normalizeTimestamp(backendTs);
     const normalizedCached  = normalizeTimestamp(cachedTs);
 
@@ -1665,7 +1733,6 @@ async function fetchRatesFromBackend(isRetry = false) {
       normalizedBackend === normalizedCached;
 
     if (cacheIsFresh) {
-      /* ⚡ Cache is already up to date — skip update */
       console.log('[BWJ] Rates unchanged. Using cache.');
       setBackendStatus('ok');
       setRatesStatus('✅ Up to date');
@@ -1673,7 +1740,6 @@ async function fetchRatesFromBackend(isRetry = false) {
       return true;
     }
 
-    /* ─── CACHE STALE → APPLY FRESH RATES ────────────────── */
     console.log('[BWJ] Rates changed. Updating cache.', {
       from: normalizedCached,
       to: normalizedBackend
@@ -1684,9 +1750,8 @@ async function fetchRatesFromBackend(isRetry = false) {
 
     if (backendTs) {
       setRatesUpdatedAt(backendTs);
-      cacheRatesLocally(backendTs);   // ✅ persist rates + timestamp
+      cacheRatesLocally(backendTs);
     } else {
-      // Backend gave no timestamp — keep old one, save rates only
       cacheRatesLocally();
     }
 
@@ -1700,7 +1765,6 @@ async function fetchRatesFromBackend(isRetry = false) {
     clearTimeout(timeout);
     console.warn('[BWJ] rate fetch failed:', err.message || err);
 
-    /* One automatic retry — Render may still be waking up */
     if (!isRetry) {
       setRatesStatus('⏳ Retrying…');
       await new Promise(r => setTimeout(r, 2000));
@@ -1709,7 +1773,6 @@ async function fetchRatesFromBackend(isRetry = false) {
 
     setBackendStatus('error');
     setRatesStatus('⚠️ Offline cache');
-    // Cache already loaded in init() — nothing more to do
     return false;
   }
 }
@@ -1772,18 +1835,16 @@ async function saveRatesToBackend() {
 
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
-    // Try to read a timestamp from the response
     let savedTs = null;
     try {
       const j = await res.clone().json();
       savedTs = extractRatesTimestamp(j);
-    } catch (e) { /* empty body is fine */ }
+    } catch (e) { }
 
-    // If backend did not echo a timestamp, this moment IS the last-update time
     if (!savedTs) savedTs = new Date();
 
     setRatesUpdatedAt(savedTs);
-    cacheRatesLocally(savedTs);   // ✅ persist rates + timestamp
+    cacheRatesLocally(savedTs);
 
     setBackendStatus('ok');
     setRatesStatus('✅ Rates Saved');
@@ -1815,6 +1876,17 @@ let manualCharge = null;
 let isUpdating = false;
 
 /* ============================================================
+   BUG FIX HELPER — reset manual making back to auto
+   ============================================================ */
+function resetManualMaking() {
+  isManualMode = false;
+  manualPercent = null;
+  manualCharge = null;
+  if (makingPct) makingPct.value = '';
+  if (makingChg) makingChg.value = '';
+}
+
+/* ============================================================
    EXTRA REMOVAL / STONE
    ============================================================ */
 const extraSelect  = document.getElementById('dynamicextraweightremove');
@@ -1834,6 +1906,8 @@ function getStoneAmt() {
 }
 
 extraSelect.addEventListener('change', function () {
+  /* BUG FIX: extra removal changes effective weight → reset manual making */
+  resetManualMaking();
   updateStoneVis();
   calculateAndUpdateUI();
 });
@@ -1849,6 +1923,8 @@ function setupMetalButtons() {
       buttons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       document.getElementById('metal').value = btn.dataset.value;
+      /* BUG FIX: metal change → reset manual making */
+      resetManualMaking();
       updateSilverMakingVisibility();
       updateDynamicDropdown();
       calculateAndUpdateUI();
@@ -3346,11 +3422,20 @@ document.getElementById('manualBillTotalInput').addEventListener('change', funct
 
 document.getElementById('resetBillTotalBtn').addEventListener('click', resetBillToOriginal);
 
-document.getElementById('weight').addEventListener('input', calculateAndUpdateUI);
-document.getElementById('dynamicextraweightremove').addEventListener('change', () => {
-  updateStoneVis();
+/* ⭐ BUG FIX — Reset manual making when weight changes so auto rules re-apply */
+document.getElementById('weight').addEventListener('input', function() {
+  resetManualMaking();
   calculateAndUpdateUI();
 });
+
+/* ⭐ BUG FIX — Reset manual making when stone amount changes (effective weight) */
+const stoneAmtInput = document.getElementById('stoneAmount');
+if (stoneAmtInput) {
+  stoneAmtInput.addEventListener('input', function() {
+    resetManualMaking();
+    calculateAndUpdateUI();
+  });
+}
 
 makingPct.addEventListener('input', handleManualPctChange);
 makingChg.addEventListener('input', handleManualChgChange);
@@ -3373,10 +3458,6 @@ window.addEventListener('resize', () => {
 
 /* ============================================================
    INIT — STALE-WHILE-REVALIDATE
-   ============================================================
-   1. Load cached rates from localStorage → paint UI INSTANTLY.
-   2. Make estimator usable immediately.
-   3. Fire background fetch → compares timestamps → updates if needed.
    ============================================================ */
 (function init() {
   setupMetalButtons();
@@ -3389,8 +3470,8 @@ window.addEventListener('resize', () => {
   /* ⭐ STEP 1 — Instant paint from localStorage */
   try {
     const cachedTime = getCachedTimestamp();
-    loadCachedRates();              // fills rate inputs from cache
-    setRatesUpdatedAt(cachedTime);  // shows cached "updated at" time
+    loadCachedRates();
+    setRatesUpdatedAt(cachedTime);
   } catch (e) {
     setRatesUpdatedAt(null);
   }
