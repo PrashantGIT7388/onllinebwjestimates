@@ -2044,9 +2044,9 @@ function getMetalRate(mv) {
   if (mv === "18")   return parseFloat(i18.value.replace(/,/g, '')) / 10;
   if (mv === "20")   return parseFloat(i20.value.replace(/,/g, '')) / 10;
   if (mv === "22")   return parseFloat(i22.value.replace(/,/g, '')) / 10;
-  if (mv === "24")   return parseFloat(i24.value.replace(/,/g, '')) / 10;
+  if (mv === "24")   return parseFloat(i18.value.replace(/,/g, '')) / 10;
   if (mv === "1")    return parseFloat(si.value.replace(/,/g, '')) / 1000;
-  if (mv === "92.5") return parseFloat(si925.value.replace(/,/g, '')) / 1000;
+  if (mv === "92.5") return parseFloat(si.value.value.replace(/,/g, '')) / 1000;
   return 0;
 }
 
@@ -2096,7 +2096,7 @@ function getAutoMaking(mv, variant, weight, metalCost) {
   if (!sil) {
     if (variant === 'keel_nosering') return 200;
     if (weight >= 3) return mv === "20" ? metalCost * 0.16 : metalCost * 0.18;
-    if (mv === '24') return  200 ;
+    if (mv === '24') return  (metalCost*0.31)+200 ;
     else return weight >= 1.5 ? metalCost * 0.20 : metalCost * 0.23;
   } else {
     if (variant === 'bichhiya_2ps') return weight <= 5  ? 70  : 100;
